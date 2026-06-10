@@ -38,6 +38,7 @@ public class AAPInstallation extends AbstractDescribableImpl<AAPInstallation> {
     private final String aapURL;
     private final String aapDisplayURL;
     private String aapCredentialsId;
+    @Deprecated
     private final boolean aapTrustCert;
     private final boolean enableDebugging;
     private Run run;
@@ -85,16 +86,28 @@ public class AAPInstallation extends AbstractDescribableImpl<AAPInstallation> {
     }
 
     public AAPConnector getAapConnector() {
-        return AAPInstallation.getAapConnectorStatic(this.aapURL, this.aapCredentialsId, this.aapTrustCert,
+        return AAPInstallation.getAapConnectorStatic(this.aapURL, this.aapCredentialsId,
                 this.enableDebugging, this.run, this.aapDisplayURL);
     }
 
-    public static AAPConnector getAapConnectorStatic(String aapURL, String aapCredentialsId, boolean trustCert,
+    public static AAPConnector getAapConnectorStatic(String aapURL, String aapCredentialsId,
                                                          boolean enableDebugging, Run run) {
-        return getAapConnectorStatic(aapURL, aapCredentialsId, trustCert, enableDebugging, run, null);
+        return getAapConnectorStatic(aapURL, aapCredentialsId, enableDebugging, run, null);
     }
 
+    @Deprecated
     public static AAPConnector getAapConnectorStatic(String aapURL, String aapCredentialsId, boolean trustCert,
+                                                         boolean enableDebugging, Run run) {
+        return getAapConnectorStatic(aapURL, aapCredentialsId, enableDebugging, run, null);
+    }
+
+    @Deprecated
+    public static AAPConnector getAapConnectorStatic(String aapURL, String aapCredentialsId, boolean trustCert,
+                                                         boolean enableDebugging, Run run, String aapDisplayURL) {
+        return getAapConnectorStatic(aapURL, aapCredentialsId, enableDebugging, run, aapDisplayURL);
+    }
+
+    public static AAPConnector getAapConnectorStatic(String aapURL, String aapCredentialsId,
                                                          boolean enableDebugging, Run run, String aapDisplayURL) {
         String username = null;
         String password = null;
@@ -114,7 +127,7 @@ public class AAPInstallation extends AbstractDescribableImpl<AAPInstallation> {
                 }
             }
         }
-        AAPConnector testConnector = new AAPConnector(aapURL, username, password, oauth_token, trustCert, enableDebugging, aapDisplayURL);
+        AAPConnector testConnector = new AAPConnector(aapURL, username, password, oauth_token, false, enableDebugging, aapDisplayURL);
         return testConnector;
     }
     
@@ -139,13 +152,12 @@ public class AAPInstallation extends AbstractDescribableImpl<AAPInstallation> {
         public FormValidation doTestAapConnection(
                 @QueryParameter("aapURL") final String aapURL,
                 @QueryParameter("aapCredentialsId") final String aapCredentialsId,
-                @QueryParameter("aapTrustCert") final boolean aapTrustCert,
                 @QueryParameter("enableDebugging") final boolean enableDebugging
         ) {
             // Also, validate that we are an Administrator
             Jenkins.getInstance().checkPermission(Jenkins.ADMINISTER);
-            AAPLogger.writeMessage("Starting to test connection with (" + aapURL + ") and (" + aapCredentialsId + ") and (" + aapTrustCert + ") with debugging (" + enableDebugging + ")");
-            AAPConnector testConnector = AAPInstallation.getAapConnectorStatic(aapURL, aapCredentialsId, aapTrustCert, enableDebugging, null);
+            AAPLogger.writeMessage("Starting to test connection with (" + aapURL + ") and (" + aapCredentialsId + ") with debugging (" + enableDebugging + ")");
+            AAPConnector testConnector = AAPInstallation.getAapConnectorStatic(aapURL, aapCredentialsId, enableDebugging, null);
             try {
                 testConnector.testConnection();
                 return FormValidation.ok("Success");

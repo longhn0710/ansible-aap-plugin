@@ -16,16 +16,13 @@
                     <f:entry title="${%Credentials}" field="aapCredentialsId">
                         <c:select/>
                     </f:entry>
-                    <f:entry title="${%Force Trust Cert}" field="aapTrustCert" help="/plugin/ansible-aap/help-trustCert.html">
-                        <f:checkbox/>
-                    </f:entry>
                     <f:entry title="${%Enable Debugging}" field="enableDebugging" help="/plugin/ansible-aap/help-enableDebugging.html">
                         <f:checkbox/>
                     </f:entry>
 
                     <f:validateButton
                             title="${%Test Connection}" progress="${%Testing...}"
-                            method="testAapConnection" with="aapURL,aapCredentialsId,aapTrustCert,enableDebugging" />
+                            method="testAapConnection" with="aapURL,aapCredentialsId,enableDebugging" />
 
                     <f:entry>
                         <div align="right">

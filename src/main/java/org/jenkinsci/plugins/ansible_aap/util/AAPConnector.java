@@ -15,7 +15,6 @@ import org.jenkinsci.plugins.ansible_aap.exceptions.AnsibleAAPException;
 
 import java.io.*;
 import java.net.URI;
-import java.net.URISyntaxException;
 import java.net.URLEncoder;
 import java.nio.charset.Charset;
 import java.util.*;
@@ -46,7 +45,6 @@ public class AAPConnector implements Serializable {
     private String username = null;
     private Secret password = null;
     private AAPVersion aapVersion = null;
-    private boolean trustAllCerts = true;
     private boolean importChildWorkflowLogs = false;
     private AAPLogger logger = new AAPLogger();
     private HashMap<Long, Long> logIdForWorkflows = new HashMap<Long, Long>();
@@ -60,10 +58,12 @@ public class AAPConnector implements Serializable {
 
     public AAPConnector(String url, String username, String password) { this(url, username, password, null, false, false, null); }
 
+    @Deprecated
     public AAPConnector(String url, String username, String password, String oauthToken, Boolean trustAllCerts, Boolean debug) {
         this(url, username, password, oauthToken, trustAllCerts, debug, null);
     }
 
+    @Deprecated
     public AAPConnector(String url, String username, String password, String oauthToken, Boolean trustAllCerts, Boolean debug, String displayURL) {
         // Credit to https://stackoverflow.com/questions/7438612/how-to-remove-the-last-character-from-a-string
         this.url = normalizeBaseURL(url);
@@ -71,7 +71,6 @@ public class AAPConnector implements Serializable {
         this.username = username;
         this.password = Secret.fromString(password);
         this.oauthToken = Secret.fromString(oauthToken);
-        this.trustAllCerts = trustAllCerts;
         this.setDebug(debug);
         try {
             this.getVersion();
@@ -82,8 +81,8 @@ public class AAPConnector implements Serializable {
         logger.logMessage("Created a connector with "+ username +"@"+ url);
     }
 
+    @Deprecated
     public void setTrustAllCerts(boolean trustAllCerts) {
-        this.trustAllCerts = trustAllCerts;
     }
     public void setDebug(boolean debug) {
         logger.setDebugging(debug);
@@ -104,16 +103,6 @@ public class AAPConnector implements Serializable {
     }
 
     private DefaultHttpClient getHttpClient() throws AnsibleAAPException {
-        URI myURI = null;
-        try {
-            myURI = new URI(url);
-        } catch(URISyntaxException urise) {
-            throw new AnsibleAAPException("Unable to prase base url: "+ urise);
-        }
-
-        if(trustAllCerts && myURI.getScheme().equalsIgnoreCase("https")) {
-            logger.logMessage("Force Trust Cert no longer disables TLS certificate validation. Add the AAP controller certificate to the Jenkins JVM trust store.");
-        }
         return new DefaultHttpClient();
     }
 
