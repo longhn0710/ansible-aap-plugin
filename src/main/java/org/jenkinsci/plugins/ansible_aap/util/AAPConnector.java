@@ -56,15 +56,13 @@ public class AAPConnector implements Serializable {
     private boolean getFullLogs = false;
     private HashMap<String, String> jenkinsExports = new HashMap<String, String>();
 
-    public AAPConnector(String url, String username, String password) { this(url, username, password, null, false, false, null); }
+    public AAPConnector(String url, String username, String password) { this(url, username, password, null, false, null); }
 
-    @Deprecated
-    public AAPConnector(String url, String username, String password, String oauthToken, Boolean trustAllCerts, Boolean debug) {
-        this(url, username, password, oauthToken, trustAllCerts, debug, null);
+    public AAPConnector(String url, String username, String password, String oauthToken, Boolean debug) {
+        this(url, username, password, oauthToken, debug, null);
     }
 
-    @Deprecated
-    public AAPConnector(String url, String username, String password, String oauthToken, Boolean trustAllCerts, Boolean debug, String displayURL) {
+    public AAPConnector(String url, String username, String password, String oauthToken, Boolean debug, String displayURL) {
         // Credit to https://stackoverflow.com/questions/7438612/how-to-remove-the-last-character-from-a-string
         this.url = normalizeBaseURL(url);
         this.displayURL = normalizeBaseURL(displayURL);
@@ -81,9 +79,6 @@ public class AAPConnector implements Serializable {
         logger.logMessage("Created a connector with "+ username +"@"+ url);
     }
 
-    @Deprecated
-    public void setTrustAllCerts(boolean trustAllCerts) {
-    }
     public void setDebug(boolean debug) {
         logger.setDebugging(debug);
     }

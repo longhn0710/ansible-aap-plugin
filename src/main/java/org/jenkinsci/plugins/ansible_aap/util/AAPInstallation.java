@@ -38,18 +38,15 @@ public class AAPInstallation extends AbstractDescribableImpl<AAPInstallation> {
     private final String aapURL;
     private final String aapDisplayURL;
     private String aapCredentialsId;
-    @Deprecated
-    private final boolean aapTrustCert;
     private final boolean enableDebugging;
     private Run run;
 
     @DataBoundConstructor
-    public AAPInstallation(String aapDisplayName, String aapURL, String aapDisplayURL, String aapCredentialsId, boolean aapTrustCert, boolean enableDebugging) {
+    public AAPInstallation(String aapDisplayName, String aapURL, String aapDisplayURL, String aapCredentialsId, boolean enableDebugging) {
         this.aapDisplayName = aapDisplayName;
         this.aapCredentialsId = aapCredentialsId;
         this.aapURL = aapURL;
         this.aapDisplayURL = aapDisplayURL;
-        this.aapTrustCert = aapTrustCert;
         this.enableDebugging = enableDebugging;
     }
 
@@ -67,10 +64,6 @@ public class AAPInstallation extends AbstractDescribableImpl<AAPInstallation> {
 
     public String getAapCredentialsId() {
         return this.aapCredentialsId;
-    }
-
-    public boolean getAapTrustCert() {
-        return this.aapTrustCert;
     }
 
     public boolean getEnableDebugging() {
@@ -95,18 +88,6 @@ public class AAPInstallation extends AbstractDescribableImpl<AAPInstallation> {
         return getAapConnectorStatic(aapURL, aapCredentialsId, enableDebugging, run, null);
     }
 
-    @Deprecated
-    public static AAPConnector getAapConnectorStatic(String aapURL, String aapCredentialsId, boolean trustCert,
-                                                         boolean enableDebugging, Run run) {
-        return getAapConnectorStatic(aapURL, aapCredentialsId, enableDebugging, run, null);
-    }
-
-    @Deprecated
-    public static AAPConnector getAapConnectorStatic(String aapURL, String aapCredentialsId, boolean trustCert,
-                                                         boolean enableDebugging, Run run, String aapDisplayURL) {
-        return getAapConnectorStatic(aapURL, aapCredentialsId, enableDebugging, run, aapDisplayURL);
-    }
-
     public static AAPConnector getAapConnectorStatic(String aapURL, String aapCredentialsId,
                                                          boolean enableDebugging, Run run, String aapDisplayURL) {
         String username = null;
@@ -127,7 +108,7 @@ public class AAPInstallation extends AbstractDescribableImpl<AAPInstallation> {
                 }
             }
         }
-        AAPConnector testConnector = new AAPConnector(aapURL, username, password, oauth_token, false, enableDebugging, aapDisplayURL);
+        AAPConnector testConnector = new AAPConnector(aapURL, username, password, oauth_token, enableDebugging, aapDisplayURL);
         return testConnector;
     }
     
