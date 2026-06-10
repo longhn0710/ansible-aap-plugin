@@ -1,490 +1,383 @@
-Ansible Tower Plugin
-====================
+# Ansible Automation Platform Plugin
 
-[![Jenkins Plugin](https://img.shields.io/jenkins/plugin/v/ansible-tower.svg)](https://plugins.jenkins.io/ansible-tower)
-[![GitHub release](https://img.shields.io/github/release/jenkinsci/ansible-tower-plugin.svg?label=changelog)](https://github.com/jenkinsci/ansible-tower-plugin/releases/latest)
-[![Jenkins Plugin Installs](https://img.shields.io/jenkins/plugin/i/ansible-tower.svg?color=blue)](https://plugins.jenkins.io/ansible-tower)
+[![Jenkins Plugin](https://img.shields.io/jenkins/plugin/v/ansible-aap.svg)](https://plugins.jenkins.io/ansible-aap)
+[![GitHub release](https://img.shields.io/github/release/jenkinsci/ansible-aap-plugin.svg?label=changelog)](https://github.com/jenkinsci/ansible-aap-plugin/releases/latest)
+[![Jenkins Plugin Installs](https://img.shields.io/jenkins/plugin/i/ansible-aap.svg?color=blue)](https://plugins.jenkins.io/ansible-aap)
 
-## About this plugin
+This plugin connects Jenkins to Red Hat Ansible Automation Platform (AAP) and compatible AWX/Ansible Tower controllers.
 
-This plugin connects Jenkins to [Ansible Tower](http://www.ansible.com/) to do the following things:
-* Run jobs as a build step
-* Update projects
+It can:
 
-## Configuration
+* Launch job templates and workflow job templates from Jenkins.
+* Import AAP job output into the Jenkins console.
+* Import workflow child job output.
+* Update projects and set project revisions.
+* Return exported values from Ansible jobs back to Jenkins pipelines.
 
-After installing the plugin you can configure Ansible Tower servers in the Jenkins Global Configuration under the section *Ansible Tower* by clicking the add button.
+This plugin is based on the Jenkins Ansible Tower plugin and uses a separate plugin ID and Pipeline step names so it can be installed alongside the existing `ansible-tower` plugin.
 
-![Configure Plugin](./docs/images/configuration-0.7.0.png)
+## Compatibility
 
-The fields are as follows:
+The plugin supports both legacy AWX/Ansible Tower UI URLs and AAP Controller UI URLs.
 
-| Field Name  | Description |
-|-------------|----------------|
-| Credentials | The credentials within Jenkins to be used to connect to the Ansible Tower server.<br/>* For basic auth use a "Username with password" type credential<br/>* For oAuth (starting in Tower 3.3.0) use a "Secret Text" type credential from the [Plain Credentials Plugin](https://plugins.jenkins.io/plain-credentials)<br/>See the OAuth Authentication section of this document for more details on setting up oAuth.|
-| Enable Debugging | This will allow the plugin to write detailed messages into the jenkins.log for debugging purposes. It will show show requests to the server and payloads. This can contain a lot of data. All messages are prefixed with \[Ansible-Tower].<br/><br/>For Example:<br/><br/>[Ansible-Tower] building request to https://192.168.56.101/api/v1/workflow_jobs/200/workflow_nodes/<br/>[Ansible-Tower] Adding auth for admin<br/>[Ansible-Tower] Forcing cert trust</br> [Ansible-Tower] {"count":4,"next":null ...</br>|
-| Force Trust Cert | If your Ansible Tower instance is using an https cert that Jenkins does not trust, and you want the plugin to trust the cert anyway, you can click this box.<br/><br/>You should really understand the implications if you are going to use this option. Its meant for testing purposes only. |
-| Name | The name that this Ansible Tower installation will be referenced as. |
-| URL | The base URL of the Ansible Tower server.|
+For legacy Tower/AWX, job links use the historical format:
 
-Once the settings are completed, you can test the connection between Jenkins and Ansible Tower by clicking on the Test Connection button.
-
-## Basic Authentication
-
-This plugin can use a username password to attempt to authenticate with Tower. As of plugin version 0.13.0 when using username/password the plugin will attempt to:
-  * Pull an OAuth2 token
-  * Attempt to use a pre-oauth authtoken
-  * Fall back to basic auth
-
-If you are using plugin version >= 0.13.0 with Basic Auth and pipelines leveraging the async method please see the note at the bottom of section `Async Execution` for details about freeing Tower tokens.
-
-## OAuth Authentication
-
-Starting in Tower version 3.3.0, Oauth Authentication can be used alongside basic auth. Beginning in Tower version 3.4.0, **basic authentication will be disabled**.
-
-The [Ansible Tower Documentation](https://docs.ansible.com/ansible-tower/latest/html/userguide/applications_auth.html)
- covers this in detail, but here is a rough outline of what needs to be performed.
-
-Tower Configuration
-
-1. Add an Application for the Jenkins Oauth tokens
-   * Name (i.e. "Jenkins")
-   * Description (optional)
-   * Organization (The organization which covers the JTs and WFJTs you will be using)
-   * Authorization Grant Type = Resource owner password-based
-   * Client Type = Confidential
-1. Add or create a user to bind to an Oauth token
-   * This should be a service account with limited permissions.
-   * Add a Token for this user with the Users / <Username> / Tokens / Create Token dialogue (with the appropriate scope)
-   * Copy the Token ID which is generated on the prompt.
-
-Jenkins Configuration
-
-1. Install this plugin (it must be a version >= 0.90)
-1. Add a Credential
-   * Choose the appropriate scope
-   * Secret = Token ID from step 2.c above
-   * ID = Something to denote it's purpose (i.e. "jenkins-tower-token")
-   * Description (optional)
-1. Complete the configuration steps as defined in this guide's 'Configuration'
-
-## Job Execution
-
-### Adding a Build Step
-
-In a freestyle project a new build step called Ansible Tower is now available:
-
-![Run Job Build Step](./docs/images/run_job_freestyle.png)
-
-| Field | Description |
-|-------|-------------|
-| Tower Server | The predefined Ansible Tower server to run the template on.|
-| Tower Credentials Override | Overrides the credentials from global Ansible Tower configuration.|
-| Template Type | Whether you are running a job or workflow template.|
-| Template ID | The name or numerical ID of the template to be run on the Ansible Tower server.|
-| Extra Vars | Additional variables to be passed to the job. I.e.:<br/>---<br/>my_var: This is a variable called my_var|
-| Job Tags | Any job tags to be passed to Ansible Tower.|
-| Skip Job Tags | Any skip tags to be passed to Ansible Tower.|
-| Job Type | Is this a template run or a check.|
-| Limit | The servers to limit the invocation to.|
-| Inventory | The name or numeric ID of the inventory to run the job on.|
-| Credential | The name or numeric ID of the credentials to run the job with.|
-| SCM Branch | The name of the SCM branch to overide while running te job.|
-| Verbose | Add additional messages to the Jenkins console about the job run.|
-| Import Tower Output | Pull the logs from Ansible Tower into the Jenkins console. Options include:<br/><ul><li><b>Do not import</b> Do not import the Ansible Tower logs into Jenkins (old checkbox not checked)</li><li><b>Import Truncated Logs</b> Pull in logs as they appear in Ansible Tower UI (long lines are truncated with ....) (old checkbox checked)</li><li><b>Import Full Logs</b> This will pull non-truncated events from Ansible Tower.</li><li><b>Process Variables Only</b> Consume the logs from Tower to process for variables but do not log in the Jenkins log.</li></ol>|
-| Import Workflow Child Output | Pull in the output from all of the jobs that the template runs.|
-| Remove Color | When importing the Ansible Tower output, strip off the ansi color encodings.|
-
-### Pipeline support
-Tower jobs can be executed from workflow scripts.
-The towerServer and jobTemplate are the only required parameters.
-
-```groovy
-node {
-    stage('MyStage') {
-        ansibleTower(
-            towerServer: 'Prod Tower',
-            towerCredentialsId: '',
-            templateType: 'job',
-            jobTemplate: 'Simple Test',
-            towerLogLevel: 'full',
-            inventory: 'Demo Inventory',
-            jobTags: '',
-            skipJobTags: '',
-            limit: '',
-            removeColor: false,
-            verbose: true,
-            credential: '',
-            extraVars: '''---
-my_var:  "Jenkins Test"''',
-            async: false
-        )
-    }
-}
+```text
+https://controller.example.com/#/jobs/123
+https://controller.example.com/#/workflows/456
 ```
 
-## Project Update
+For AAP Controller, job links use the current execution output format:
 
-### Adding a Build Step
-In a freestyle project a new build called Ansible Tower Project Sync is now available:
+```text
+https://controller.example.com/execution/jobs/playbook/123/output
+https://controller.example.com/execution/jobs/workflow/456/output
+https://controller.example.com/execution/jobs/project_update/789/output
+```
 
-![Project Sync Build Step](./docs/images/project_sync_freestyle.png)
+If your AAP API gateway and AAP Controller UI use different host names, configure both `URL` and `Display URL` as described below.
+
+## Installation
+
+Build the plugin with Maven:
+
+```bash
+mvn test
+mvn package
+```
+
+The packaged plugin is generated at:
+
+```text
+target/ansible-aap.hpi
+```
+
+Install the `.hpi` file from:
+
+```text
+Manage Jenkins -> Plugins -> Advanced settings -> Deploy Plugin
+```
+
+Restart Jenkins if required.
+
+## Global Configuration
+
+After installing the plugin, open:
+
+```text
+Manage Jenkins -> System -> Ansible Automation Platform
+```
+
+Add one or more AAP installations.
 
 | Field | Description |
-|-------|-------------|
-| Tower Server | The predefined Ansible Tower server to run the sync on. |
-| Tower Credentials Override | Overrides the credentials from global Ansible Tower configuration. |
-| Project Name | The name of the project to perform the SCM sync. |
-| Verbose | Add additional messages to the Jenkins console about the job run.|
-| Import Tower Output | Pull all of the logs from Ansible Tower into the Jenkins console.|
-| Remove Color | When importing the Ansible Tower output, strip off the ansi color encodings.|
+| --- | --- |
+| Name | Logical name used by Pipeline steps through `aapServer`. |
+| URL | Base API URL for AAP, AWX, or Tower. For AAP gateway deployments this is usually the gateway host. |
+| Display URL | Optional UI base URL used when printing links to job output. Set this when the API URL and Controller UI URL are different. |
+| Credentials | Jenkins credentials used to authenticate with AAP. Use "Username with password" for basic authentication, or "Secret text" for token-based authentication where supported. |
+| Force Trust Cert | Trust the HTTPS certificate even if Jenkins does not trust the issuer. Use carefully, mainly for internal or test environments. |
+| Enable Debugging | Write detailed API/debug messages to Jenkins logs. Enable only while troubleshooting. |
 
-### Pipeline Support
-Project syncs can be executed from workflow scripts. The ansibleTowerProjectSync function is made available through this plugin. The towerServer and project parameters are the only ones required.
-```groovy
-        projectSyncResults = ansibleTowerProjectSync(
-            async: true,
-            importTowerLogs: true,
-            project: 'Demo Project',
-            removeColor: false,
-            throwExceptionWhenFail: false,
-            towerServer: 'EC2 AWX 8',
-            verbose: false
-        )
+Example AAP 2.x style configuration:
+
+```text
+Name:        production-aap
+URL:         https://aap.example.com
+Display URL: https://aap-controller.example.com
+Credentials: jenkins-aap-service-account
 ```
+
+If `Display URL` is not set, the plugin uses `URL` as the UI base. For AAP Controller deployments this may produce links to the API gateway instead of the Controller UI, so setting `Display URL` is recommended when those hosts differ.
+
+## Pipeline Usage
+
+The main Pipeline step is `ansibleAAP`.
+
+Minimal job template example:
+
+```groovy
+ansibleAAP(
+    aapServer: 'production-aap',
+    jobTemplate: 'Deploy application',
+    templateType: 'job'
+)
+```
+
+Workflow template example:
+
+```groovy
+ansibleAAP(
+    aapServer: 'production-aap',
+    jobTemplate: '329',
+    jobType: 'run',
+    templateType: 'workflow',
+    aapCredentialsId: 'jenkins-aap-service-account',
+    aapLogLevel: 'full',
+    importWorkflowChildLogs: true,
+    throwExceptionWhenFail: true,
+    extraVars: '''---
+environment: develop
+application_name: payment-service
+image_tag: 1.0.0
+'''
+)
+```
+
+Common parameters:
+
+| Parameter | Description |
+| --- | --- |
+| `aapServer` | Required. Name of the AAP installation from Jenkins global configuration. |
+| `jobTemplate` | Required. Template name or numeric template ID. |
+| `templateType` | `job` or `workflow`. Defaults to `job`. |
+| `jobType` | `run` or `check`, depending on template settings. |
+| `aapCredentialsId` | Optional credential override. If empty, the global installation credential is used. |
+| `aapLogLevel` | Output import mode. Common values are `false`, `true`, `full`, and `variables`. |
+| `extraVars` | YAML extra variables passed to AAP. |
+| `inventory` | Inventory name or ID override. |
+| `credential` | Credential name or ID override for the launched AAP job. |
+| `limit` | Host limit. |
+| `jobTags` | Job tags. |
+| `skipJobTags` | Skip tags. |
+| `scmBranch` | SCM branch override. |
+| `verbose` | Print additional Jenkins console messages. |
+| `removeColor` | Strip ANSI color from imported AAP output. |
+| `importWorkflowChildLogs` | Import child job output for workflow templates. |
+| `throwExceptionWhenFail` | Fail the Jenkins build when the AAP job fails. Defaults to `true`. |
+| `async` | Launch the job and return immediately. Defaults to `false`. |
+
+For non-async job runs, the step returns a map-like object with:
+
+| Key | Description |
+| --- | --- |
+| `JOB_ID` | AAP job ID. |
+| `JOB_URL` | UI URL for the launched job. |
+| `JOB_RESULT` | `SUCCESS` or `FAILED`. |
+
+Example:
+
+```groovy
+def result = ansibleAAP(
+    aapServer: 'production-aap',
+    jobTemplate: 'Deploy application',
+    templateType: 'job',
+    aapLogLevel: 'full',
+    throwExceptionWhenFail: false
+)
+
+echo "AAP job ${result.JOB_ID}: ${result.JOB_URL}"
+echo "AAP result: ${result.JOB_RESULT}"
+```
+
+## Project Sync
+
+The Pipeline step for project updates is `ansibleAAPProjectSync`.
+
+```groovy
+def syncResult = ansibleAAPProjectSync(
+    aapServer: 'production-aap',
+    project: 'Infrastructure project',
+    aapCredentialsId: 'jenkins-aap-service-account',
+    importAAPLogs: true,
+    throwExceptionWhenFail: true
+)
+
+echo "AAP project sync ${syncResult.SYNC_ID}: ${syncResult.SYNC_URL}"
+```
+
+Common parameters:
+
+| Parameter | Description |
+| --- | --- |
+| `aapServer` | Required. Name of the AAP installation. |
+| `project` | Required. Project name or ID. |
+| `aapCredentialsId` | Optional credential override. |
+| `importAAPLogs` | Import sync output into Jenkins. |
+| `verbose` | Print additional Jenkins console messages. |
+| `removeColor` | Strip ANSI color from imported output. |
+| `throwExceptionWhenFail` | Fail the Jenkins build when sync fails. |
+| `async` | Start the sync and return immediately. |
 
 ## Project Revision
 
-**Note:** You can run a project revision on a non-scm project. This will not raise an error to Jenkins as the Tower API will allow this to happen. 
+The Pipeline step for setting a project revision is `ansibleAAPProjectRevision`.
 
-**Note:** Tower will auto sync the project on the change of the revision. Therefore calling Ansible Tower Project Sync in a job after the update is redundant.
-
-### Adding a Build Step
-In a freestyle project a new build called Ansible Tower Project Revision is now available:
-
-![Project Revision Build Step](,/docs/images/project_revision_freestyle.png)
-
-| Field | Description |
-|-------|-------------|
-| Tower Server | The predefined Ansible Tower server to run the sync on. |
-| Tower Credentials Override | Overrides the credentials from global Ansible Tower configuration. |
-| Project Name | The name of the project to perform the SCM sync. |
-| Revision | The revision to set for the specified project.|
-| Verbose | Add additional messages to the Jenkins console about the job run.|
-
-### Pipeline Support
-Project revision can be executed from workflow scripts. The ansibleTowerProjectRevision function is made available through this plugin. The towerServer, project and revision parameters are the only ones required.
 ```groovy
-        projectSyncResults = ansibleTowerProjectRevision(
-            towerServer: 'EC2 AWX 8',
-            project: 'Demo Project',
-            revision: 'v1.0',
-            throwExceptionWhenFail: false,
-            verbose: false
-        )
+ansibleAAPProjectRevision(
+    aapServer: 'production-aap',
+    project: 'Infrastructure project',
+    revision: 'main',
+    aapCredentialsId: 'jenkins-aap-service-account',
+    throwExceptionWhenFail: true
+)
+```
+
+## Freestyle Jobs
+
+The plugin also provides Freestyle build steps:
+
+* `Ansible Automation Platform`
+* `Ansible Automation Platform Project Sync`
+* `Ansible Automation Platform Project Revision`
+
+The Freestyle fields map to the Pipeline parameters documented above.
+
+## Migration from Ansible Tower Plugin
+
+This plugin is intentionally separate from the existing `ansible-tower` plugin.
+
+Use the new Jenkins global configuration section:
+
+```text
+Manage Jenkins -> System -> Ansible Automation Platform
+```
+
+Pipeline syntax changes:
+
+| Old `ansible-tower` syntax | New `ansible-aap` syntax |
+| --- | --- |
+| `ansibleTower` | `ansibleAAP` |
+| `ansibleTowerProjectSync` | `ansibleAAPProjectSync` |
+| `ansibleTowerProjectRevision` | `ansibleAAPProjectRevision` |
+| `towerServer` | `aapServer` |
+| `towerCredentialsId` | `aapCredentialsId` |
+| `towerLogLevel` | `aapLogLevel` |
+| `importTowerLogs` | `importAAPLogs` |
+
+Before:
+
+```groovy
+ansibleTower(
+    towerServer: 'legacy-tower',
+    towerCredentialsId: 'jenkins-tower-credential',
+    jobTemplate: '329',
+    jobType: 'run',
+    templateType: 'workflow',
+    towerLogLevel: 'full'
+)
+```
+
+After:
+
+```groovy
+ansibleAAP(
+    aapServer: 'production-aap',
+    aapCredentialsId: 'jenkins-aap-credential',
+    jobTemplate: '329',
+    jobType: 'run',
+    templateType: 'workflow',
+    aapLogLevel: 'full'
+)
+```
+
+The plugin IDs and configuration files are different, so both plugins can be installed on the same Jenkins controller while jobs are migrated.
+
+## Authentication
+
+The plugin can authenticate with a username/password credential. When username/password authentication is used, the plugin attempts token-based API authentication where supported and falls back according to controller capabilities.
+
+For token-based authentication, use a Jenkins "Secret text" credential if supported by your AAP/Tower version and security model.
+
+Use a dedicated service account with the minimum permissions required to:
+
+* Read job and workflow templates.
+* Launch the required templates.
+* Read launched jobs and job events.
+* Read project sync status when using project sync.
+
+## Importing Output
+
+Use `aapLogLevel` to control how much AAP output is copied into the Jenkins console.
+
+Common modes:
+
+| Value | Behavior |
+| --- | --- |
+| `false` | Do not import AAP output. |
+| `true` | Import truncated output similar to the AAP UI. |
+| `full` | Import full non-truncated event output. |
+| `variables` | Process exported variables without printing logs. |
+
+For workflow templates, set `importWorkflowChildLogs: true` to include child job output.
+
+## Returning Data to Jenkins
+
+The plugin recognizes exported values from Ansible output and returns them to Jenkins.
+
+Purpose-driven logging example:
+
+```yaml
+- name: Export a Jenkins variable
+  debug:
+    msg: "JENKINS_EXPORT RELEASE_VERSION=1.2.3"
+```
+
+`set_stats` example:
+
+```yaml
+- name: Export values with set_stats
+  set_stats:
+    data:
+      JENKINS_EXPORT:
+        - release_version: "1.2.3"
+        - deployment_status: "ok"
+    aggregate: yes
+    per_host: no
+```
+
+Pipeline example:
+
+```groovy
+def result = ansibleAAP(
+    aapServer: 'production-aap',
+    jobTemplate: 'Deploy application',
+    templateType: 'job',
+    aapLogLevel: 'variables'
+)
+
+echo "Release version: ${result.release_version}"
 ```
 
 ## Async Execution
 
-As of version 0.10.0, pipeline scripts that run jobs within Tower support the async option. This will run the Tower task but immediately return the control of the job back to Jenkins. In the return value from either ansibleTower or ansibleTowerProjectSync will be an object that can be used later on to interact with the job:
+Set `async: true` to launch an AAP job and return control to the Pipeline immediately.
 
 ```groovy
-stage('Launch Tower job') {
-    node('master') {
-        // Here we launching the Tower job in async mode
-        tower_job = ansibleTower(
-                async: true,
-                jobTemplate: 'Jenkins Export Vars',
-                templateType: 'job',
-                towerServer: 'Tower 3.6.0'
-        )
-        println("Tower job "+ tower_job.get("JOB_ID") +" was submitted. Job URL is: "+ tower_job.get("JOB_URL"))
-    }
-}
- 
-// Since control is returned this stage will run right away
-stage('Something else') {
-    node('master') {
-        println("Doing something else")
-    }
-}
- 
-// Now we can use our tower_job object to wait for the Tower job to complete
-stage('Wait for Tower job') {
-    node('master') {
-        def job = tower_job.get("job", null)
-        if(job == null) {
-            errir("The tower job was defined as null!")
-        }
-        timeout(120) {
-            waitUntil {
-                return job.isComplete()
-            }
-        }
-    }
-}
- 
-// Once the job is done we may want to do things like:
-//    * Get the logs
-//    * Check on exported values
-//    * See if the job was successful or not
-stage('Process Tower results') {
-    node('master') {
-        // Def a variable to save some typing
-        def job = tower_job.get("job", null)
-        if(job == null) {
-            error("Tower job was null")
-        }
- 
-        // First lets get and display the logs
-        def Vector<String> logs = job.getLogs()
-        for (String line : logs) {
-            println(line)
-        }
- 
-        // Now lets get our exports, these depend on us calling getLogs
-        def HashMap<String, String> exports = job.getExports()
-        def returned_value = exports.get("value", "Not Defined")
-        if(returned_value != "T-REX") {
-            println("Tower job did not return a T-Rex: "+ returned_value)
-        } else {
-            println("Exports were as expected")
-        }
- 
-        // Finally, lets see if the job was successful
-        boolean successful = job.wasSuccessful()
-        if(successful) {
-            println("Job ran successfully")
-        } else {
-            error("The job did not end well")
-        }
+def launched = ansibleAAP(
+    aapServer: 'production-aap',
+    jobTemplate: 'Long running deployment',
+    templateType: 'job',
+    async: true
+)
 
-        // Release the Tower token (see note below)
-        job.releaseToken()
-    }
-}
+echo "AAP job ${launched.JOB_ID} was submitted: ${launched.JOB_URL}"
 ```
 
-**Note:** the above example would require in-process script approvals in order to be run. Specifically the following needed to be added:
+Async jobs return an object that can be used by trusted Pipeline code to check status and fetch logs. Depending on your Jenkins script security configuration, additional in-process script approvals may be required.
 
-* method java.util.Dictionary get java.lang.Object
-* method org.jenkinsci.plugins.ansible_tower.util.TowerJob getExports
-* method org.jenkinsci.plugins.ansible_tower.util.TowerJob getLogs
-* method org.jenkinsci.plugins.ansible_tower.util.TowerJob isComplete
-* method org.jenkinsci.plugins.ansible_tower.util.TowerJob wasSuccessful
-* method org.jenkinsci.plugins.ansible_tower.util.TowerJob releaseToken
-* new java.util.HashMap
-* new java.util.Vector
+## Development
 
-Using ansibleTowerProjectSync will require similar script approvals:
-* method org.jenkinsci.plugins.ansible_tower.util.TowerProjectSync getLogs
-* method org.jenkinsci.plugins.ansible_tower.util.TowerProjectSync isComplete
-* method org.jenkinsci.plugins.ansible_tower.util.TowerProjectSync wasSuccessful
-* method org.jenkinsci.plugins.ansible_tower.util.TowerProjectSync releaseToken
+Build and test locally:
 
-Please consider if you want these options added and use at your own risk.
-
-
-**Note:** with release 0.13 new auth procedures were implemented. If you are using a username/password credential a token will attempt to be retrieved when calling the Tower API. When running with the async option, the token will be released as soon as control is returned to your groovy script. If you many another call to the API (i.e. by calling getLogs) a new Token will be established. It is your responsibility to remove that token when you no longer need it. Failure to do so will leave dangling tokens in Tower.
-
-
-## Expanding Env Vars
-
-The fields passed to Tower (project, jobTemplate, extraVars, limit, jobTags, inventory, credential) can have Jenkins Env Vars placed inside of them and expanded. For example, if you had a job parameter as TAG you could expand that in the Extra Vars like this:
-```yaml
----
-my_var: "$TAG"
+```bash
+mvn test
+mvn package
 ```
 
-## Console Color
+Run a specific test:
 
-You need to install another plugin like [AnsiColor plugin](https://wiki.jenkins-ci.org/display/JENKINS/AnsiColor+Plugin) to output a colorized Ansible log.
-
-```groovy
-node {
-    wrap([$class: 'AnsiColorBuildWrapper', colorMapName: "xterm"]) {
-        ansibleTower(
-            towerServer: 'Prod Tower',
-            jobTemplate: 'Simple Test',
-            importTowerLogs: true,
-            inventory: 'Demo Inventory',
-            jobTags: '',
-            limit: '',
-            removeColor: false,
-            verbose: true,
-            credential: '',
-            extraVars: '''---
-            my_var: "Jenkins Test"'''
-        )
-    }
-}
+```bash
+mvn -Dtest=AAPConnectorDisplayUrlTest test
 ```
 
-If you do not have a plugin like AnsiColor or want to remove the color from the log set removeColor: true.
+If you are using an older Maven version locally and the Jenkins plugin parent enforcer blocks the build, upgrade Maven to the required version. During local experimentation only, you can bypass the enforcer:
 
-
-## Returning Data
-The plugin supports sending data from Tower back to Jenkins for use in your job. For job runs, there are two methods for exporting data: Purpose Driven Logging and Setting Stats
-
-### Purpose Driven Logging
-Then, in your Tower job simply include a debugging statement like:
-
-```yaml
-    - name: Set a Jenkins variable
-      debug:
-        msg: "JENKINS_EXPORT VAR_NAME=value"
-```
- 
-The Tower plugin will recognize this message and use the EnvInject plugin to add an environment variable named VAR_NAME with a value of "value" into the pipeline for consumption by downstream tasks.
-
-### Setting Stats
-Another option is to use the set_stats module in Ansible like:
-
-```yaml
-    - name: Set a jenkins variable for with stat
-      set_stats:
-        data:
-          JENKINS_EXPORT:
-            - some_name: var_value
-            - some_other_var : Another value
-        aggregate: yes
-        per_host: no
+```bash
+mvn -Denforcer.skip=true test
+mvn -Denforcer.skip=true package
 ```
 
-The Tower plugin will look for variables under JENKINS_EXPORT and use EnvInject plugin to add an environment variables into the pipeline for consumption by downstream tasks. In the previous example two variables would be created: some_name, set to var_value; and some_other_var set to "Another value".
+## License
 
-**Please reference set_stats documentation for usage and additional parameters, per_host and aggregate are not necessarily needed.**
-
-The process to leverage the returned data in Jenkins depends on your job type:
-
-### Freestyle returns
-The plugin supports sending data back to Jenkins as environment variables via the [EnvInject plugin](https://wiki.jenkins.io/display/JENKINS/EnvInject+Plugin). First be sure the plugin is installed (its not a dependency for this plugin, it needs to be installed separately).
-
-If you try to export a variable but don't have the EnvInject plugin installed the Tower plugin will let you know with a message like:
-
-```text
-    Found environment variables to inject but the EnvInject plugin was not found
-```
-
-* Important note: if you do use this plugin as a part of Jenkins Pipeline (under a script {} section) it is possible that you may not be able to access return values from Env variables. Only way to return and access values would be pipeline returns. Please see below. Reason:
-source: https://plugins.jenkins.io/envinject/
-```text
-Even though it is possible to set up the EnvInject Job Property and build step in Pipeline, the plugin does not provide full compatibility with Jenkins Pipeline.
-
-Supported use-cases:
-
-    Injection of EnvVars defined in the "Properties Content" field of the Job Property
-        These EnvVars are being injected to the script environment and will be inaccessible via the "env" Pipeline global variable
-        Please note there is also a known compatibility issue with Durable Task Plugin 1.13
-
-All other use-cases of the plugin may work incorrectly in Jenkins Pipeline. Please see JENKINS-42614 for more information about unsupported use-cases. There is no short-term plan to fix the compatibility issues though any pull requests to the plugin will be appreciated.
-```
-
-### Pipeline returns
-
-When running under a pipeline, the EnvInject plugin is not required. The environment variables will either be:
-
-* Returned in the return object (for non-async jobs)
-* Accessible through the job object (for async jobs)
-
-The async job example can be seen above in the Pipeline Support section.
-
-For a non-async job you can access the variables as so:
-```groovy
-node {
-    stage ('deploy gitlab') {
-        wrap([$class: 'AnsiColorBuildWrapper', colorMapName: "xterm"]) {
-            results = ansibleTower(
-                towerServer: 'Tower 3.3.0',
-                jobTemplate: 'Jenkins Export Vars',
-                importTowerLogs: true,
-                removeColor: false,
-                verbose: true,
-            )
-             
-            sh 'env' // this may not always work
-        }
-        println(results.JOB_ID)
-        println(results.value)
-    }
-}
-```
-
-Another example could be as follows:
-```groovy
-pipeline {
-    agent any
-    environment {
-        MY_ENV_VAR='' // not recommended, only for demonstration
-    }
-    stages {
-      stage('Tower') {
-            steps{
-                script{
-                    results=ansibleTower(
-                        importTowerLogs: true,
-                        importWorkflowChildLogs: false,
-                        jobTemplate: 'Demo Set Stats template',
-                        jobType: 'run',
-                        removeColor: false,
-                        templateType: 'job',
-                        throwExceptionWhenFail: false,
-                        towerCredentialsId: '5a55e074-d8c3-474e-b0de-c2f3af738c3c',
-                        towerServer: 'infra-ansible-tower',
-                        verbose: true
-                    )
-                    print(results['vm1']);
-                    print(results.vm2);
-                    $MY_ENV_VAR=results.toString(); // not recommended
-                }
-            }
-        }
-      stage('output'){
-          steps{
-              print(results['vm1']);
-              print(results.vm2);
-              echo $MY_ENV_VAR // not recommended
-          }
-      }
-    }
-}
-```
-
-In this example you can see that we are setting `results` variable and accessing it in the stage `Tower` as well as in the following stage `output`. You may skip the definition and use of `$MY_ENV_VAR`, but it is shown here as to how you can get the data in Env var. One of the disadvantage with Env var is that if you are getting return value other than a `String` (which is the case in this plugin) you may fail to set and use the env var correctly. Hence its recommended to not use Env var method.
-
-Above example of pipeline uses a playbook that looks like this:
-```
----
-- name: Set stats sample play
-  hosts: localhost
-  connection: local
-  vars:
-    vm1:
-      name: Test stats
-      vm_name: test-vm-1
-      ip_addr: 10.x.x.x
-      description: some descriptive text
-    vm2:
-      name: Test stats
-      vm_name: test-vm-2
-      ip_addr: 10.x.x.x
-      description: some descriptive text
-  tasks:
-    - name: Set stats for demo
-      set_stats:
-        data:
-          JENKINS_EXPORT:
-            - vm1: "{{ vm1 }}"
-            - vm2: "{{ vm2 }}"
-```
-
-For a job run, there are three special variables in results:
-
-* JOB_ID - a string containing the Tower ID number of the job
-* JOB_URL - a string containing the URL to the job in Tower
-* JOB_RESULT - a String of either SUCCESS or FAILED depending on the job status.<br/>**Note:** This variable is only applied for a non-async job.
-
-For a project sync, there are:
-* SYNC_ID - a string containing the Tower ID number of the project sync
-* SYNC_URL - a string containing the URL to the sync job in Tower
-* SYNC_RESULT = a string of either SUCCESS or FAILED depending on the sync status.<br/>**Note:** This variable is only applied for a non-async job.
+This plugin is released under the MIT License. See [LICENSE](LICENSE).
