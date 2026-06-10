@@ -12,7 +12,6 @@ import com.cloudbees.plugins.credentials.common.UsernamePasswordCredentials;
 import com.cloudbees.plugins.credentials.common.StandardUsernamePasswordCredentials;
 import com.cloudbees.plugins.credentials.domains.DomainRequirement;
 
-import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import hudson.model.Run;
 import jenkins.model.Jenkins;
 import org.jenkinsci.plugins.plaincredentials.StringCredentials;
@@ -22,7 +21,7 @@ import hudson.model.Descriptor;
 import hudson.model.Project;
 import hudson.util.FormValidation;
 import hudson.util.ListBoxModel;
-import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.kohsuke.stapler.AncestorInPath;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.QueryParameter;
@@ -119,7 +118,6 @@ public class AAPInstallation extends AbstractDescribableImpl<AAPInstallation> {
         return testConnector;
     }
     
-    @SuppressFBWarnings("DCN_NULLPOINTER_EXCEPTION")
     private static <C extends Credentials> List<C> getCredsList(Class<C> type, Run run) {
         List<C> credsList;
 
@@ -176,4 +174,3 @@ public class AAPInstallation extends AbstractDescribableImpl<AAPInstallation> {
         }
     }
 }
-

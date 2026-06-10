@@ -20,7 +20,7 @@ import org.kohsuke.stapler.DataBoundSetter;
 import org.kohsuke.stapler.QueryParameter;
 import org.kohsuke.stapler.verb.POST;
 
-import javax.annotation.Nonnull;
+import edu.umd.cs.findbugs.annotations.NonNull;
 import java.io.IOException;
 import java.util.Properties;
 
@@ -31,8 +31,8 @@ import static com.cloudbees.plugins.credentials.CredentialsMatchers.instanceOf;
  */
 public class AnsibleAAP extends Builder {
 
-	private @Nonnull String aapServer     = DescriptorImpl.aapServer;
-	private @Nonnull String jobTemplate     = DescriptorImpl.jobTemplate;
+	private @NonNull String aapServer     = DescriptorImpl.aapServer;
+	private @NonNull String jobTemplate     = DescriptorImpl.jobTemplate;
 	private String aapCredentialsId       = DescriptorImpl.aapCredentialsId;
 	private String extraVars                = DescriptorImpl.extraVars;
 	private String jobTags                  = DescriptorImpl.jobTags;
@@ -40,7 +40,7 @@ public class AnsibleAAP extends Builder {
 	private String jobType                  = DescriptorImpl.jobType;
     private String limit                    = DescriptorImpl.limit;
     private String inventory                = DescriptorImpl.inventory;
-    private String credential               = DescriptorImpl.credential;
+    private String credentialName           = DescriptorImpl.credential;
 	private String scmBranch                = DescriptorImpl.scmBranch;
     private Boolean verbose                 = DescriptorImpl.verbose;
     private String importAAPLogs			= DescriptorImpl.importAAPLogs;
@@ -50,7 +50,7 @@ public class AnsibleAAP extends Builder {
 
 	/* Legacy constructor from 0.15.0 */
 	public AnsibleAAP(
-			@Nonnull String aapServer, @Nonnull String jobTemplate, String aapCredentialsId, String jobType,
+			@NonNull String aapServer, @NonNull String jobTemplate, String aapCredentialsId, String jobType,
 			String extraVars, String jobTags, String skipJobTags, String limit, String inventory, String credential, String scmBranch,
 			Boolean verbose, Boolean importAAPLogs, Boolean removeColor, String templateType,
 			Boolean importWorkflowChildLogs
@@ -64,7 +64,7 @@ public class AnsibleAAP extends Builder {
 		this.jobType = jobType;
 		this.limit = limit;
 		this.inventory = inventory;
-		this.credential = credential;
+		this.credentialName = credential;
 		this.scmBranch = scmBranch;
 		this.verbose = verbose;
 		this.importAAPLogs = importAAPLogs.toString();
@@ -75,7 +75,7 @@ public class AnsibleAAP extends Builder {
 
 	@DataBoundConstructor
 	public AnsibleAAP(
-			@Nonnull String aapServer, @Nonnull String jobTemplate, String aapCredentialsId, String jobType,
+			@NonNull String aapServer, @NonNull String jobTemplate, String aapCredentialsId, String jobType,
 			String extraVars, String jobTags, String skipJobTags, String limit, String inventory, String credential, String scmBranch,
 			Boolean verbose, String importAAPLogs, Boolean removeColor, String templateType,
 			Boolean importWorkflowChildLogs
@@ -89,7 +89,7 @@ public class AnsibleAAP extends Builder {
 		this.jobType = jobType;
 		this.limit = limit;
 		this.inventory = inventory;
-		this.credential = credential;
+		this.credentialName = credential;
 		this.scmBranch = scmBranch;
 		this.verbose = verbose;
 		this.importAAPLogs = importAAPLogs;
@@ -98,9 +98,9 @@ public class AnsibleAAP extends Builder {
 		this.importWorkflowChildLogs = importWorkflowChildLogs;
 	}
 
-	@Nonnull
+	@NonNull
 	public String getAapServer() { return aapServer; }
-	@Nonnull
+	@NonNull
 	public String getJobTemplate() { return jobTemplate; }
 	public String getAapCredentialsId() { return aapCredentialsId; }
 	public String getExtraVars() { return extraVars; }
@@ -109,7 +109,7 @@ public class AnsibleAAP extends Builder {
 	public String getJobType() { return jobType; }
 	public String getLimit() { return limit; }
 	public String getInventory() { return inventory; }
-	public String getCredential() { return credential; }
+	public String getCredential() { return credentialName; }
 	public String getScmBranch() { return scmBranch; }
 	public Boolean getVerbose() { return verbose; }
 	public String getImportAAPLogs() { return importAAPLogs; }
@@ -136,7 +136,7 @@ public class AnsibleAAP extends Builder {
 	@DataBoundSetter
 	public void setInventory(String inventory) { this.inventory = inventory; }
 	@DataBoundSetter
-	public void setCredential(String credential) { this.credential = credential; }
+	public void setCredential(String credential) { this.credentialName = credential; }
 	@DataBoundSetter
 	public void setScmBranch(String scmBranch) { this.scmBranch = scmBranch; }
 	@DataBoundSetter
@@ -218,7 +218,9 @@ public class AnsibleAAP extends Builder {
         @Override
         public String getDisplayName() { return "Ansible Automation Platform"; }
 
-        public ListBoxModel doFillAapServerItems() {
+        @POST
+        public ListBoxModel doFillAapServerItems(@AncestorInPath Item item) {
+            GetUserPageCredentials.checkItemConfigureOrAdmin(item);
 			ListBoxModel items = new ListBoxModel();
 			items.add(" - None -");
 			for(AAPInstallation aapServer : AnsibleAAPGlobalConfig.get().getAapInstallation()) {

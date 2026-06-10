@@ -20,7 +20,7 @@ import org.kohsuke.stapler.DataBoundSetter;
 import org.kohsuke.stapler.QueryParameter;
 import org.kohsuke.stapler.verb.POST;
 
-import javax.annotation.Nonnull;
+import edu.umd.cs.findbugs.annotations.NonNull;
 import java.io.IOException;
 import java.util.Properties;
 
@@ -29,17 +29,17 @@ import java.util.Properties;
  */
 public class AnsibleAAPProjectRevisionFreestyle extends Builder {
 
-	private @Nonnull String aapServer     = DescriptorImpl.aapServer;
+	private @NonNull String aapServer     = DescriptorImpl.aapServer;
 	private String aapCredentialsId       = "";
-	private @Nonnull String project         = DescriptorImpl.project;
+	private @NonNull String project         = DescriptorImpl.project;
 	private String revision                 = DescriptorImpl.revision;
     private Boolean verbose                 = DescriptorImpl.verbose;
 	private Boolean throwExceptionWhenFail  = true;
 
 	@DataBoundConstructor
 	public AnsibleAAPProjectRevisionFreestyle(
-			@Nonnull String aapServer, String aapCredentialsId,
-			@Nonnull String project, String revision,
+			@NonNull String aapServer, String aapCredentialsId,
+			@NonNull String project, String revision,
 			Boolean verbose, Boolean throwExceptionWhenFail
 	) {
 		this.aapServer = aapServer;
@@ -50,10 +50,10 @@ public class AnsibleAAPProjectRevisionFreestyle extends Builder {
 		this.throwExceptionWhenFail = throwExceptionWhenFail;
 	}
 
-	@Nonnull
+	@NonNull
 	public String getAapServer() { return aapServer; }
 	public String getAapCredentialsId() { return aapCredentialsId; }
-	@Nonnull
+	@NonNull
 	public String getProject() { return project; }
 	public String getRevision() { return revision; }
 	public Boolean getVerbose() { return verbose; }
@@ -124,7 +124,9 @@ public class AnsibleAAPProjectRevisionFreestyle extends Builder {
         @Override
         public String getDisplayName() { return "Ansible Automation Platform Project Revision"; }
 
-        public ListBoxModel doFillAapServerItems() {
+        @POST
+        public ListBoxModel doFillAapServerItems(@AncestorInPath Item item) {
+            GetUserPageCredentials.checkItemConfigureOrAdmin(item);
 			ListBoxModel items = new ListBoxModel();
 			items.add(" - None -");
 			for(AAPInstallation aapServer : AnsibleAAPGlobalConfig.get().getAapInstallation()) {

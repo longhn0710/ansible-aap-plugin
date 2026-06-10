@@ -5,6 +5,7 @@ package org.jenkinsci.plugins.ansible_aap.util;
  */
 
 import com.google.common.net.HttpHeaders;
+import hudson.util.Secret;
 import net.sf.json.JSONArray;
 import org.apache.http.Header;
 import org.apache.http.client.methods.*;
@@ -21,8 +22,6 @@ import java.security.KeyStore;
 import java.util.*;
 
 import net.sf.json.JSONObject;
-import org.apache.commons.codec.binary.Base64;
-
 import org.apache.http.HttpResponse;
 import org.apache.http.HttpVersion;
 import org.apache.http.conn.ClientConnectionManager;
@@ -50,13 +49,13 @@ public class AAPConnector implements Serializable {
     private static final String ARTIFACTS = "artifacts";
     private static String API_VERSION = "v2";
 
-    private String authorizationHeader = null;
-    private String oauthToken = null;
-    private String oAuthTokenID = null;
+    private Secret authorizationHeader = null;
+    private Secret oauthToken = null;
+    private Secret oAuthTokenID = null;
     private String url = null;
     private String displayURL = null;
     private String username = null;
-    private String password = null;
+    private Secret password = null;
     private AAPVersion aapVersion = null;
     private boolean trustAllCerts = true;
     private boolean importChildWorkflowLogs = false;
@@ -81,8 +80,8 @@ public class AAPConnector implements Serializable {
         this.url = normalizeBaseURL(url);
         this.displayURL = normalizeBaseURL(displayURL);
         this.username = username;
-        this.password = password;
-        this.oauthToken = oauthToken;
+        this.password = Secret.fromString(password);
+        this.oauthToken = Secret.fromString(oauthToken);
         this.trustAllCerts = trustAllCerts;
         this.setDebug(debug);
         try {
@@ -211,15 +210,15 @@ public class AAPConnector implements Serializable {
                 if(this.oauthToken != null) {
                     // First if we have an oauthToken we can just use it
                     logger.logMessage("Adding oauth bearer token from Jenkins");
-                    this.authorizationHeader = "Bearer "+ this.oauthToken;
-                } else if(this.username != null && this.password != null) {
+                    this.authorizationHeader = Secret.fromString("Bearer " + getOAuthTokenSecret());
+                } else if(this.username != null && getPassword() != null) {
                     // Second, if we have a username and a password we can try to go get a token
 
                     // For trying to get a token, we will first attempt to self create an oAuthToken if AAP supports it
                     if (this.aapSupports("/api/o/")) {
                         logger.logMessage("Getting an oAuth token for "+ this.username);
                         try {
-                            this.authorizationHeader = "Bearer " + this.getOAuthToken();
+                            this.authorizationHeader = Secret.fromString("Bearer " + this.getOAuthToken());
                         } catch(AnsibleAAPException ate) {
                             logger.logMessage("Unable to get oAuth Toekn: "+ ate.getMessage());
                         }
@@ -229,7 +228,7 @@ public class AAPConnector implements Serializable {
                     if(this.authorizationHeader == null && this.aapSupports("/api/v2/authtoken")) {
                         logger.logMessage("Getting a legacy token for " + this.username);
                         try {
-                            this.authorizationHeader = "Token " + this.getAuthToken();
+                            this.authorizationHeader = Secret.fromString("Token " + this.getAuthToken());
                         } catch (AnsibleAAPException ate) {
                             logger.logMessage("Unable to get legacuy token: " + ate.getMessage());
                         }
@@ -261,7 +260,7 @@ public class AAPConnector implements Serializable {
 
                     if (this.authorizationHeader == null) {
                         logger.logMessage("AAP does not support authtoken or oauth, reverting to basic auth");
-                        this.authorizationHeader = this.getBasicAuthString();
+                        this.authorizationHeader = Secret.fromString(this.getBasicAuthString());
                     }
                 } else {
                     throw new AnsibleAAPException("Auth is required for this call but no auth info exists");
@@ -272,7 +271,7 @@ public class AAPConnector implements Serializable {
             if(this.authorizationHeader == null) {
                 throw new AnsibleAAPException("We should have gotten an authorization header but did not");
             }
-            request.setHeader(HttpHeaders.AUTHORIZATION, this.authorizationHeader);
+            request.setHeader(HttpHeaders.AUTHORIZATION, getAuthorizationHeader());
         }
 
         // Dump the request
@@ -1165,9 +1164,8 @@ public class AAPConnector implements Serializable {
     }
 
     private String getBasicAuthString() {
-        String auth = this.username + ":" + this.password;
-        byte[] encodedAuth = Base64.encodeBase64(auth.getBytes(Charset.forName("UTF-8")));
-        return "Basic " + new String(encodedAuth, Charset.forName("UTF-8"));
+        String auth = this.username + ":" + getPassword();
+        return "Basic " + Base64.getEncoder().encodeToString(auth.getBytes(Charset.forName("UTF-8")));
     }
 
     private String getOAuthToken() throws AnsibleAAPException {
@@ -1216,11 +1214,11 @@ public class AAPConnector implements Serializable {
         }
 
         if (responseObject.containsKey("id")) {
-            this.oAuthTokenID = responseObject.getString("id");
+            this.oAuthTokenID = Secret.fromString(responseObject.getString("id"));
         }
 
         if (responseObject.containsKey("token")) {
-            logger.logMessage("AuthToken acquired ("+ this.oAuthTokenID +")");
+            logger.logMessage("AuthToken acquired ("+ getOAuthTokenID() +")");
             return responseObject.getString("token");
         }
         logger.logMessage(json);
@@ -1235,7 +1233,7 @@ public class AAPConnector implements Serializable {
         tokenRequest.setHeader(HttpHeaders.AUTHORIZATION, this.getBasicAuthString());
         JSONObject body = new JSONObject();
         body.put("username", this.username);
-        body.put("password", this.password);
+        body.put("password", getPassword());
         try {
             StringEntity bodyEntity = new StringEntity(body.toString());
             tokenRequest.setEntity(bodyEntity);
@@ -1280,10 +1278,10 @@ public class AAPConnector implements Serializable {
     }
 
     public void releaseToken() {
-        if(this.oAuthTokenID != null) {
-            logger.logMessage("Deleting oAuth token "+ this.oAuthTokenID +" for " + this.username);
+        if(getOAuthTokenID() != null) {
+            logger.logMessage("Deleting oAuth token "+ getOAuthTokenID() +" for " + this.username);
             try {
-                String tokenURI = url + this.buildEndpoint("/tokens/" + this.oAuthTokenID + "/");
+                String tokenURI = url + this.buildEndpoint("/tokens/" + getOAuthTokenID() + "/");
                 HttpDelete tokenRequest = new HttpDelete(tokenURI);
                 tokenRequest.setHeader(HttpHeaders.AUTHORIZATION, this.getBasicAuthString());
 
@@ -1311,5 +1309,21 @@ public class AAPConnector implements Serializable {
         else if(methodId == 2) { return "POST"; }
         else if(methodId == 3) { return "PATCH"; }
         else { return "UNKNOWN"; }
+    }
+
+    private String getAuthorizationHeader() {
+        return Secret.toString(this.authorizationHeader);
+    }
+
+    private String getOAuthTokenSecret() {
+        return Secret.toString(this.oauthToken);
+    }
+
+    private String getOAuthTokenID() {
+        return Secret.toString(this.oAuthTokenID);
+    }
+
+    private String getPassword() {
+        return Secret.toString(this.password);
     }
 }

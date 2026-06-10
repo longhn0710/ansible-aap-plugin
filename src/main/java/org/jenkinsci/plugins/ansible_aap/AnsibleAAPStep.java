@@ -22,7 +22,7 @@ import org.kohsuke.stapler.DataBoundSetter;
 import org.kohsuke.stapler.QueryParameter;
 import org.kohsuke.stapler.verb.POST;
 
-import javax.annotation.Nonnull;
+import edu.umd.cs.findbugs.annotations.NonNull;
 import java.util.Properties;
 
 public class AnsibleAAPStep extends AbstractStepImpl {
@@ -35,7 +35,7 @@ public class AnsibleAAPStep extends AbstractStepImpl {
     private String jobTags                  = "";
     private String skipJobTags              = "";
     private String inventory                = "";
-    private String credential               = "";
+    private String credentialName           = "";
     private String scmBranch                = "";
     private Boolean verbose                 = false;
     private Boolean importAAPLogs         = null;
@@ -49,7 +49,7 @@ public class AnsibleAAPStep extends AbstractStepImpl {
     /* This dericated function will remain here in order for any thing calling our plugin to remain functional */
     @Deprecated
     public AnsibleAAPStep(
-            @Nonnull String aapServer, @Nonnull String aapCredentialsId, @Nonnull String jobTemplate, String jobType, String extraVars, String jobTags,
+            @NonNull String aapServer, @NonNull String aapCredentialsId, @NonNull String jobTemplate, String jobType, String extraVars, String jobTags,
             String skipJobTags, String limit, String inventory, String credential, String scmBranch, Boolean verbose,
             Boolean importAAPLogs, Boolean removeColor, String templateType, Boolean importWorkflowChildLogs,
             Boolean throwExceptionWhenFail, Boolean async
@@ -63,7 +63,7 @@ public class AnsibleAAPStep extends AbstractStepImpl {
         this.jobType = jobType;
         this.limit = limit;
         this.inventory = inventory;
-        this.credential = credential;
+        this.credentialName = credential;
         this.scmBranch = scmBranch;
         this.verbose = verbose;
         this.aapLogLevel = importAAPLogs.toString();
@@ -79,7 +79,7 @@ public class AnsibleAAPStep extends AbstractStepImpl {
     /** @since 0.16.0 */
     @DataBoundConstructor
     public AnsibleAAPStep(
-            @Nonnull String aapServer, @Nonnull String aapCredentialsId, @Nonnull String jobTemplate, String jobType
+            @NonNull String aapServer, @NonNull String aapCredentialsId, @NonNull String jobTemplate, String jobType
     ) {
         this.aapServer = aapServer;
         this.aapCredentialsId = aapCredentialsId;
@@ -87,9 +87,9 @@ public class AnsibleAAPStep extends AbstractStepImpl {
         this.jobType = jobType;
     }
 
-    @Nonnull
+    @NonNull
     public String getAapServer()              { return aapServer; }
-    @Nonnull
+    @NonNull
     public String getJobTemplate()              { return jobTemplate; }
     public String getAapCredentialsId()       { return aapCredentialsId; }
     public String getExtraVars()                { return extraVars; }
@@ -98,7 +98,7 @@ public class AnsibleAAPStep extends AbstractStepImpl {
     public String getJobType()                  { return jobType;}
     public String getLimit()                    { return limit; }
     public String getInventory()                { return inventory; }
-    public String getCredential()               { return credential; }
+    public String getCredential()               { return credentialName; }
     public String getScmBranch()                { return scmBranch; }
     public Boolean getVerbose()                 { return verbose; }
     public Boolean getImportAAPLogs()         { return importAAPLogs; }
@@ -128,7 +128,7 @@ public class AnsibleAAPStep extends AbstractStepImpl {
     @DataBoundSetter
     public void setInventory(String inventory) { this.inventory = inventory; }
     @DataBoundSetter
-    public void setCredential(String credential) { this.credential = credential; }
+    public void setCredential(String credential) { this.credentialName = credential; }
     @DataBoundSetter
 	public void setScmBranch(String scmBranch) { this.scmBranch = scmBranch; }
 	@DataBoundSetter
@@ -190,7 +190,9 @@ public class AnsibleAAPStep extends AbstractStepImpl {
             return "Have Ansible Automation Platform run a job template";
         }
 
-        public ListBoxModel doFillAapServerItems() {
+        @POST
+        public ListBoxModel doFillAapServerItems(@AncestorInPath Item item) {
+            GetUserPageCredentials.checkItemConfigureOrAdmin(item);
             ListBoxModel items = new ListBoxModel();
             items.add(" - None -");
             for (AAPInstallation aapServer : AnsibleAAPGlobalConfig.get().getAapInstallation()) {
@@ -311,4 +313,3 @@ public class AnsibleAAPStep extends AbstractStepImpl {
         }
     }
 }
-

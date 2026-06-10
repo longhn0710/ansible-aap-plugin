@@ -20,7 +20,7 @@ import org.kohsuke.stapler.DataBoundSetter;
 import org.kohsuke.stapler.QueryParameter;
 import org.kohsuke.stapler.verb.POST;
 
-import javax.annotation.Nonnull;
+import edu.umd.cs.findbugs.annotations.NonNull;
 import java.io.IOException;
 import java.util.Properties;
 
@@ -31,16 +31,16 @@ import static com.cloudbees.plugins.credentials.CredentialsMatchers.instanceOf;
  */
 public class AnsibleAAPProjectSyncFreestyle extends Builder {
 
-	private @Nonnull String aapServer     = DescriptorImpl.aapServer;
+	private @NonNull String aapServer     = DescriptorImpl.aapServer;
 	private String aapCredentialsId       = "";
-	private @Nonnull String project         = DescriptorImpl.project;
+	private @NonNull String project         = DescriptorImpl.project;
     private Boolean verbose                 = DescriptorImpl.verbose;
     private Boolean importAAPLogs			= DescriptorImpl.importAAPLogs;
     private Boolean removeColor				= DescriptorImpl.removeColor;
 
 	@DataBoundConstructor
 	public AnsibleAAPProjectSyncFreestyle(
-			@Nonnull String aapServer, String aapCredentialsId, @Nonnull String project, Boolean verbose,
+			@NonNull String aapServer, String aapCredentialsId, @NonNull String project, Boolean verbose,
 			Boolean importAAPLogs, Boolean removeColor
 	) {
 		this.aapServer = aapServer;
@@ -51,10 +51,10 @@ public class AnsibleAAPProjectSyncFreestyle extends Builder {
 		this.removeColor = removeColor;
 	}
 
-	@Nonnull
+	@NonNull
 	public String getAapServer() { return aapServer; }
 	public String getAapCredentialsId() { return aapCredentialsId; }
-	@Nonnull
+	@NonNull
 	public String getProject() { return project; }
 	public Boolean getVerbose() { return verbose; }
 	public Boolean getImportAAPLogs() { return importAAPLogs; }
@@ -127,7 +127,9 @@ public class AnsibleAAPProjectSyncFreestyle extends Builder {
         @Override
         public String getDisplayName() { return "Ansible Automation Platform Project Sync"; }
 
-        public ListBoxModel doFillAapServerItems() {
+        @POST
+        public ListBoxModel doFillAapServerItems(@AncestorInPath Item item) {
+            GetUserPageCredentials.checkItemConfigureOrAdmin(item);
 			ListBoxModel items = new ListBoxModel();
 			items.add(" - None -");
 			for(AAPInstallation aapServer : AnsibleAAPGlobalConfig.get().getAapInstallation()) {

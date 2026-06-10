@@ -15,8 +15,6 @@ import org.jenkinsci.plugins.ansible_aap.exceptions.AnsibleAAPException;
 import org.jenkinsci.plugins.ansible_aap.util.*;
 import org.jenkinsci.plugins.envinject.service.EnvInjectActionSetter;
 
-import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
-
 import java.io.PrintStream;
 import java.util.*;
 
@@ -34,7 +32,6 @@ public class AnsibleAAPRunner {
                 templateType, importWorkflowChildLogs, ws, run, aapResults, false);
     }
     
-    @SuppressFBWarnings("DCN_NULLPOINTER_EXCEPTION")
     public boolean runJobTemplate(
             PrintStream logger, String aapServer, String aapCredentialsId, String jobTemplate, String jobType,
             String extraVars, String limit, String jobTags, String skipJobTags, String inventory, String credential, String scmBranch,

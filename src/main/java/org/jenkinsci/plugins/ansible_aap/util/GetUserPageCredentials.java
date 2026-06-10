@@ -48,4 +48,12 @@ public class GetUserPageCredentials {
                 CREDENTIALS_MATCHER
         ).includeCurrentValue(credentialsId);
     }
+
+    public static void checkItemConfigureOrAdmin(Item item) {
+        if (item == null) {
+            Jenkins.get().checkPermission(Jenkins.ADMINISTER);
+        } else {
+            item.checkPermission(Item.CONFIGURE);
+        }
+    }
 }

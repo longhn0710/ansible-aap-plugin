@@ -21,7 +21,7 @@ import org.kohsuke.stapler.DataBoundSetter;
 import org.kohsuke.stapler.QueryParameter;
 import org.kohsuke.stapler.verb.POST;
 
-import javax.annotation.Nonnull;
+import edu.umd.cs.findbugs.annotations.NonNull;
 import java.util.Properties;
 
 import static com.cloudbees.plugins.credentials.CredentialsMatchers.instanceOf;
@@ -38,7 +38,7 @@ public class AnsibleAAPProjectSyncStep extends AbstractStepImpl {
 
     @DataBoundConstructor
     public AnsibleAAPProjectSyncStep(
-            @Nonnull String aapServer, @Nonnull String aapCredentialsId, @Nonnull String project, Boolean verbose,
+            @NonNull String aapServer, @NonNull String aapCredentialsId, @NonNull String project, Boolean verbose,
             Boolean importAAPLogs, Boolean removeColor, Boolean throwExceptionWhenFail, Boolean async
     ) {
         this.aapServer = aapServer;
@@ -51,10 +51,10 @@ public class AnsibleAAPProjectSyncStep extends AbstractStepImpl {
         this.async = async;
     }
 
-    @Nonnull
+    @NonNull
     public String getAapServer()              { return aapServer; }
     public String getAapCredentialsId()       { return aapCredentialsId; }
-    @Nonnull
+    @NonNull
     public String getProject()                  { return project; }
     public Boolean getVerbose()                 { return verbose; }
     public Boolean getImportAAPLogs()         { return importAAPLogs; }
@@ -109,7 +109,9 @@ public class AnsibleAAPProjectSyncStep extends AbstractStepImpl {
             return "Have Ansible Automation Platform update a AAP project";
         }
 
-        public ListBoxModel doFillAapServerItems() {
+        @POST
+        public ListBoxModel doFillAapServerItems(@AncestorInPath Item item) {
+            GetUserPageCredentials.checkItemConfigureOrAdmin(item);
             ListBoxModel items = new ListBoxModel();
             items.add(" - None -");
             for (AAPInstallation aapServer : AnsibleAAPGlobalConfig.get().getAapInstallation()) {
