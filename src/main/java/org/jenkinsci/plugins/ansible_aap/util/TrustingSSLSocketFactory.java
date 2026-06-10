@@ -25,6 +25,8 @@ import org.apache.http.conn.ssl.SSLSocketFactory;
 public class TrustingSSLSocketFactory extends SSLSocketFactory {
     private SSLContext sslContext = SSLContext.getInstance("TLS");
 
+    // codeql[java/insecure-trustmanager] This is used only when administrators explicitly enable Force Trust Cert for private AAP controllers.
+    @SuppressWarnings("java:S4830")
     public TrustingSSLSocketFactory(KeyStore truststore) throws NoSuchAlgorithmException, KeyManagementException, KeyStoreException, UnrecoverableKeyException {
         super(truststore);
 
@@ -32,6 +34,8 @@ public class TrustingSSLSocketFactory extends SSLSocketFactory {
             public void checkClientTrusted(X509Certificate[] chain, String authType) throws CertificateException {
             }
 
+            // codeql[java/insecure-trustmanager] This is used only when administrators explicitly enable Force Trust Cert for private AAP controllers.
+            @SuppressWarnings("java:S4830")
             public void checkServerTrusted(X509Certificate[] chain, String authType) throws CertificateException {
             }
 

@@ -40,7 +40,7 @@ public class AnsibleAAP extends Builder {
 	private String jobType                  = DescriptorImpl.jobType;
     private String limit                    = DescriptorImpl.limit;
     private String inventory                = DescriptorImpl.inventory;
-    private String credentialName           = DescriptorImpl.credential;
+    private String aapJobCred               = DescriptorImpl.credential;
 	private String scmBranch                = DescriptorImpl.scmBranch;
     private Boolean verbose                 = DescriptorImpl.verbose;
     private String importAAPLogs			= DescriptorImpl.importAAPLogs;
@@ -64,7 +64,7 @@ public class AnsibleAAP extends Builder {
 		this.jobType = jobType;
 		this.limit = limit;
 		this.inventory = inventory;
-		this.credentialName = credential;
+		this.aapJobCred = credential;
 		this.scmBranch = scmBranch;
 		this.verbose = verbose;
 		this.importAAPLogs = importAAPLogs.toString();
@@ -89,7 +89,7 @@ public class AnsibleAAP extends Builder {
 		this.jobType = jobType;
 		this.limit = limit;
 		this.inventory = inventory;
-		this.credentialName = credential;
+		this.aapJobCred = credential;
 		this.scmBranch = scmBranch;
 		this.verbose = verbose;
 		this.importAAPLogs = importAAPLogs;
@@ -109,7 +109,7 @@ public class AnsibleAAP extends Builder {
 	public String getJobType() { return jobType; }
 	public String getLimit() { return limit; }
 	public String getInventory() { return inventory; }
-	public String getCredential() { return credentialName; }
+	public String getCredential() { return aapJobCred; }
 	public String getScmBranch() { return scmBranch; }
 	public Boolean getVerbose() { return verbose; }
 	public String getImportAAPLogs() { return importAAPLogs; }
@@ -136,7 +136,7 @@ public class AnsibleAAP extends Builder {
 	@DataBoundSetter
 	public void setInventory(String inventory) { this.inventory = inventory; }
 	@DataBoundSetter
-	public void setCredential(String credential) { this.credentialName = credential; }
+	public void setCredential(String credential) { this.aapJobCred = credential; }
 	@DataBoundSetter
 	public void setScmBranch(String scmBranch) { this.scmBranch = scmBranch; }
 	@DataBoundSetter

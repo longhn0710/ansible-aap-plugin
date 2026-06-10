@@ -35,7 +35,7 @@ public class AnsibleAAPStep extends AbstractStepImpl {
     private String jobTags                  = "";
     private String skipJobTags              = "";
     private String inventory                = "";
-    private String credentialName           = "";
+    private String aapJobCred               = "";
     private String scmBranch                = "";
     private Boolean verbose                 = false;
     private Boolean importAAPLogs         = null;
@@ -63,7 +63,7 @@ public class AnsibleAAPStep extends AbstractStepImpl {
         this.jobType = jobType;
         this.limit = limit;
         this.inventory = inventory;
-        this.credentialName = credential;
+        this.aapJobCred = credential;
         this.scmBranch = scmBranch;
         this.verbose = verbose;
         this.aapLogLevel = importAAPLogs.toString();
@@ -98,7 +98,7 @@ public class AnsibleAAPStep extends AbstractStepImpl {
     public String getJobType()                  { return jobType;}
     public String getLimit()                    { return limit; }
     public String getInventory()                { return inventory; }
-    public String getCredential()               { return credentialName; }
+    public String getCredential()               { return aapJobCred; }
     public String getScmBranch()                { return scmBranch; }
     public Boolean getVerbose()                 { return verbose; }
     public Boolean getImportAAPLogs()         { return importAAPLogs; }
@@ -128,7 +128,7 @@ public class AnsibleAAPStep extends AbstractStepImpl {
     @DataBoundSetter
     public void setInventory(String inventory) { this.inventory = inventory; }
     @DataBoundSetter
-    public void setCredential(String credential) { this.credentialName = credential; }
+    public void setCredential(String credential) { this.aapJobCred = credential; }
     @DataBoundSetter
 	public void setScmBranch(String scmBranch) { this.scmBranch = scmBranch; }
 	@DataBoundSetter
