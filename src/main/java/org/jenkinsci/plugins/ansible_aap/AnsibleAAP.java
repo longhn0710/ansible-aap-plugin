@@ -14,13 +14,14 @@ import hudson.tasks.Builder;
 import hudson.util.ListBoxModel;
 import org.jenkinsci.plugins.ansible_aap.util.GetUserPageCredentials;
 import org.jenkinsci.plugins.ansible_aap.util.AAPInstallation;
+import org.jenkinsci.plugins.ansible_aap.util.DescriptorPermission;
 import org.kohsuke.stapler.AncestorInPath;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.DataBoundSetter;
 import org.kohsuke.stapler.QueryParameter;
 import org.kohsuke.stapler.verb.POST;
 
-import javax.annotation.Nonnull;
+import edu.umd.cs.findbugs.annotations.NonNull;
 import java.io.IOException;
 import java.util.Properties;
 
@@ -31,8 +32,8 @@ import static com.cloudbees.plugins.credentials.CredentialsMatchers.instanceOf;
  */
 public class AnsibleAAP extends Builder {
 
-	private @Nonnull String aapServer     = DescriptorImpl.aapServer;
-	private @Nonnull String jobTemplate     = DescriptorImpl.jobTemplate;
+	private @NonNull String aapServer     = DescriptorImpl.aapServer;
+	private @NonNull String jobTemplate     = DescriptorImpl.jobTemplate;
 	private String aapCredentialsId       = DescriptorImpl.aapCredentialsId;
 	private String extraVars                = DescriptorImpl.extraVars;
 	private String jobTags                  = DescriptorImpl.jobTags;
@@ -50,7 +51,7 @@ public class AnsibleAAP extends Builder {
 
 	/* Legacy constructor from 0.15.0 */
 	public AnsibleAAP(
-			@Nonnull String aapServer, @Nonnull String jobTemplate, String aapCredentialsId, String jobType,
+			@NonNull String aapServer, @NonNull String jobTemplate, String aapCredentialsId, String jobType,
 			String extraVars, String jobTags, String skipJobTags, String limit, String inventory, String credential, String scmBranch,
 			Boolean verbose, Boolean importAAPLogs, Boolean removeColor, String templateType,
 			Boolean importWorkflowChildLogs
@@ -75,7 +76,7 @@ public class AnsibleAAP extends Builder {
 
 	@DataBoundConstructor
 	public AnsibleAAP(
-			@Nonnull String aapServer, @Nonnull String jobTemplate, String aapCredentialsId, String jobType,
+			@NonNull String aapServer, @NonNull String jobTemplate, String aapCredentialsId, String jobType,
 			String extraVars, String jobTags, String skipJobTags, String limit, String inventory, String credential, String scmBranch,
 			Boolean verbose, String importAAPLogs, Boolean removeColor, String templateType,
 			Boolean importWorkflowChildLogs
@@ -98,9 +99,9 @@ public class AnsibleAAP extends Builder {
 		this.importWorkflowChildLogs = importWorkflowChildLogs;
 	}
 
-	@Nonnull
+	@NonNull
 	public String getAapServer() { return aapServer; }
-	@Nonnull
+	@NonNull
 	public String getJobTemplate() { return jobTemplate; }
 	public String getAapCredentialsId() { return aapCredentialsId; }
 	public String getExtraVars() { return extraVars; }
@@ -218,10 +219,12 @@ public class AnsibleAAP extends Builder {
         @Override
         public String getDisplayName() { return "Ansible Automation Platform"; }
 
-        public ListBoxModel doFillAapServerItems() {
-			ListBoxModel items = new ListBoxModel();
-			items.add(" - None -");
-			for(AAPInstallation aapServer : AnsibleAAPGlobalConfig.get().getAapInstallation()) {
+			@POST
+        public ListBoxModel doFillAapServerItems(@AncestorInPath Item item) {
+				DescriptorPermission.checkConfigurePermission(item);
+				ListBoxModel items = new ListBoxModel();
+				items.add(" - None -");
+				for(AAPInstallation aapServer : AnsibleAAPGlobalConfig.get().getAapInstallation()) {
 				items.add(aapServer.getAapDisplayName());
 			}
 			return items;

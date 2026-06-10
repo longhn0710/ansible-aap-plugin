@@ -14,6 +14,7 @@ import hudson.model.TaskListener;
 import hudson.util.ListBoxModel;
 import org.jenkinsci.plugins.ansible_aap.util.GetUserPageCredentials;
 import org.jenkinsci.plugins.ansible_aap.util.AAPInstallation;
+import org.jenkinsci.plugins.ansible_aap.util.DescriptorPermission;
 import org.jenkinsci.plugins.workflow.steps.AbstractStepDescriptorImpl;
 import org.jenkinsci.plugins.workflow.steps.AbstractStepImpl;
 import org.jenkinsci.plugins.workflow.steps.AbstractSynchronousNonBlockingStepExecution;
@@ -24,7 +25,7 @@ import org.kohsuke.stapler.DataBoundSetter;
 import org.kohsuke.stapler.QueryParameter;
 import org.kohsuke.stapler.verb.POST;
 
-import javax.annotation.Nonnull;
+import edu.umd.cs.findbugs.annotations.NonNull;
 import java.util.Properties;
 
 public class AnsibleAAPProjectRevisionStep extends AbstractStepImpl {
@@ -37,8 +38,8 @@ public class AnsibleAAPProjectRevisionStep extends AbstractStepImpl {
 
     @DataBoundConstructor
     public AnsibleAAPProjectRevisionStep(
-            @Nonnull String aapServer, @Nonnull String aapCredentialsId,
-            @Nonnull String project, String revision,
+            @NonNull String aapServer, @NonNull String aapCredentialsId,
+            @NonNull String project, String revision,
             Boolean verbose, Boolean throwExceptionWhenFail
     ) {
         this.aapServer = aapServer;
@@ -49,10 +50,10 @@ public class AnsibleAAPProjectRevisionStep extends AbstractStepImpl {
         this.throwExceptionWhenFail = throwExceptionWhenFail;
     }
 
-    @Nonnull
+    @NonNull
     public String getAapServer()              { return aapServer; }
     public String getAapCredentialsId()       { return aapCredentialsId; }
-    @Nonnull
+    @NonNull
     public String getProject()                  { return project; }
     public String getRevision()                  { return revision; }
     public Boolean getVerbose()                 { return verbose; }
@@ -94,7 +95,9 @@ public class AnsibleAAPProjectRevisionStep extends AbstractStepImpl {
             return "Have Ansible Automation Platform update a AAP project's revision";
         }
 
-        public ListBoxModel doFillAapServerItems() {
+        @POST
+        public ListBoxModel doFillAapServerItems(@AncestorInPath Item item) {
+            DescriptorPermission.checkConfigurePermission(item);
             ListBoxModel items = new ListBoxModel();
             items.add(" - None -");
             for (AAPInstallation aapServer : AnsibleAAPGlobalConfig.get().getAapInstallation()) {
@@ -168,4 +171,3 @@ public class AnsibleAAPProjectRevisionStep extends AbstractStepImpl {
         }
     }
 }
-

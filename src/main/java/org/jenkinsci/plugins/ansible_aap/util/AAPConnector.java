@@ -16,13 +16,11 @@ import java.io.*;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URLEncoder;
-import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.security.KeyStore;
 import java.util.*;
 
 import net.sf.json.JSONObject;
-import org.apache.commons.codec.binary.Base64;
-
 import org.apache.http.HttpResponse;
 import org.apache.http.HttpVersion;
 import org.apache.http.conn.ClientConnectionManager;
@@ -41,6 +39,8 @@ import org.apache.http.util.EntityUtils;
 import org.jenkinsci.plugins.ansible_aap.exceptions.AnsibleAAPItemDoesNotExist;
 
 public class AAPConnector implements Serializable {
+    private static final long serialVersionUID = 1L;
+
     // If adding a new method, make sure to update getMethodName()
     public static final int GET = 1;
     public static final int POST = 2;
@@ -50,13 +50,13 @@ public class AAPConnector implements Serializable {
     private static final String ARTIFACTS = "artifacts";
     private static String API_VERSION = "v2";
 
-    private String authorizationHeader = null;
-    private String oauthToken = null;
-    private String oAuthTokenID = null;
+    private transient String authorizationHeader = null;
+    private transient String oauthToken = null;
+    private transient String oAuthTokenID = null;
     private String url = null;
     private String displayURL = null;
     private String username = null;
-    private String password = null;
+    private transient String password = null;
     private AAPVersion aapVersion = null;
     private boolean trustAllCerts = true;
     private boolean importChildWorkflowLogs = false;
@@ -1166,8 +1166,7 @@ public class AAPConnector implements Serializable {
 
     private String getBasicAuthString() {
         String auth = this.username + ":" + this.password;
-        byte[] encodedAuth = Base64.encodeBase64(auth.getBytes(Charset.forName("UTF-8")));
-        return "Basic " + new String(encodedAuth, Charset.forName("UTF-8"));
+        return "Basic " + Base64.getEncoder().encodeToString(auth.getBytes(StandardCharsets.UTF_8));
     }
 
     private String getOAuthToken() throws AnsibleAAPException {

@@ -12,6 +12,7 @@ import hudson.*;
 import hudson.util.ListBoxModel;
 import org.jenkinsci.plugins.ansible_aap.util.GetUserPageCredentials;
 import org.jenkinsci.plugins.ansible_aap.util.AAPInstallation;
+import org.jenkinsci.plugins.ansible_aap.util.DescriptorPermission;
 import org.jenkinsci.plugins.workflow.steps.AbstractStepImpl;
 import org.jenkinsci.plugins.workflow.steps.AbstractSynchronousNonBlockingStepExecution;
 import org.jenkinsci.plugins.workflow.steps.StepContextParameter;
@@ -22,7 +23,7 @@ import org.kohsuke.stapler.DataBoundSetter;
 import org.kohsuke.stapler.QueryParameter;
 import org.kohsuke.stapler.verb.POST;
 
-import javax.annotation.Nonnull;
+import edu.umd.cs.findbugs.annotations.NonNull;
 import java.util.Properties;
 
 public class AnsibleAAPStep extends AbstractStepImpl {
@@ -49,7 +50,7 @@ public class AnsibleAAPStep extends AbstractStepImpl {
     /* This dericated function will remain here in order for any thing calling our plugin to remain functional */
     @Deprecated
     public AnsibleAAPStep(
-            @Nonnull String aapServer, @Nonnull String aapCredentialsId, @Nonnull String jobTemplate, String jobType, String extraVars, String jobTags,
+            @NonNull String aapServer, @NonNull String aapCredentialsId, @NonNull String jobTemplate, String jobType, String extraVars, String jobTags,
             String skipJobTags, String limit, String inventory, String credential, String scmBranch, Boolean verbose,
             Boolean importAAPLogs, Boolean removeColor, String templateType, Boolean importWorkflowChildLogs,
             Boolean throwExceptionWhenFail, Boolean async
@@ -79,7 +80,7 @@ public class AnsibleAAPStep extends AbstractStepImpl {
     /** @since 0.16.0 */
     @DataBoundConstructor
     public AnsibleAAPStep(
-            @Nonnull String aapServer, @Nonnull String aapCredentialsId, @Nonnull String jobTemplate, String jobType
+            @NonNull String aapServer, @NonNull String aapCredentialsId, @NonNull String jobTemplate, String jobType
     ) {
         this.aapServer = aapServer;
         this.aapCredentialsId = aapCredentialsId;
@@ -87,9 +88,9 @@ public class AnsibleAAPStep extends AbstractStepImpl {
         this.jobType = jobType;
     }
 
-    @Nonnull
+    @NonNull
     public String getAapServer()              { return aapServer; }
-    @Nonnull
+    @NonNull
     public String getJobTemplate()              { return jobTemplate; }
     public String getAapCredentialsId()       { return aapCredentialsId; }
     public String getExtraVars()                { return extraVars; }
@@ -190,7 +191,9 @@ public class AnsibleAAPStep extends AbstractStepImpl {
             return "Have Ansible Automation Platform run a job template";
         }
 
-        public ListBoxModel doFillAapServerItems() {
+        @POST
+        public ListBoxModel doFillAapServerItems(@AncestorInPath Item item) {
+            DescriptorPermission.checkConfigurePermission(item);
             ListBoxModel items = new ListBoxModel();
             items.add(" - None -");
             for (AAPInstallation aapServer : AnsibleAAPGlobalConfig.get().getAapInstallation()) {
@@ -311,4 +314,3 @@ public class AnsibleAAPStep extends AbstractStepImpl {
         }
     }
 }
-

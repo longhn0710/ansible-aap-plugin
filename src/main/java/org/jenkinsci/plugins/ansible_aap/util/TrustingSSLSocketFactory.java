@@ -21,6 +21,8 @@ import javax.net.ssl.TrustManager;
 import javax.net.ssl.X509TrustManager;
 
 import org.apache.http.conn.ssl.SSLSocketFactory;
+
+@SuppressWarnings({"java/insecure-trustmanager", "java/unsafe-hostname-verification"})
 public class TrustingSSLSocketFactory extends SSLSocketFactory {
     private SSLContext sslContext = SSLContext.getInstance("TLS");
 
