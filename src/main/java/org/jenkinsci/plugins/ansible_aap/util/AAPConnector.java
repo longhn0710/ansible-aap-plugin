@@ -18,24 +18,13 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URLEncoder;
 import java.nio.charset.Charset;
-import java.security.KeyStore;
 import java.util.*;
 
 import net.sf.json.JSONObject;
 import org.apache.http.HttpResponse;
-import org.apache.http.HttpVersion;
-import org.apache.http.conn.ClientConnectionManager;
-import org.apache.http.conn.scheme.Scheme;
-import org.apache.http.conn.scheme.SchemeRegistry;
-import org.apache.http.conn.ssl.SSLSocketFactory;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.DefaultHttpClient;
 
-import org.apache.http.impl.conn.tsccm.ThreadSafeClientConnManager;
-import org.apache.http.params.BasicHttpParams;
-import org.apache.http.params.HttpParams;
-import org.apache.http.params.HttpProtocolParams;
-import org.apache.http.protocol.HTTP;
 import org.apache.http.util.EntityUtils;
 import org.jenkinsci.plugins.ansible_aap.exceptions.AnsibleAAPItemDoesNotExist;
 
@@ -123,30 +112,9 @@ public class AAPConnector implements Serializable {
         }
 
         if(trustAllCerts && myURI.getScheme().equalsIgnoreCase("https")) {
-            logger.logMessage("Forcing cert trust");
-            TrustingSSLSocketFactory sf;
-            try {
-                KeyStore trustStore = KeyStore.getInstance(KeyStore.getDefaultType());
-                trustStore.load(null, null);
-                sf = new TrustingSSLSocketFactory(trustStore);
-            } catch(Exception e) {
-                throw new AnsibleAAPException("Unable to create trusting SSL socket factory");
-            }
-            sf.setHostnameVerifier(SSLSocketFactory.ALLOW_ALL_HOSTNAME_VERIFIER);
-
-            HttpParams params = new BasicHttpParams();
-            HttpProtocolParams.setVersion(params, HttpVersion.HTTP_1_1);
-            HttpProtocolParams.setContentCharset(params, HTTP.UTF_8);
-
-            SchemeRegistry registry = new SchemeRegistry();
-            registry.register(new Scheme("https", sf, 443));
-
-            ClientConnectionManager ccm = new ThreadSafeClientConnManager(params, registry);
-
-            return new DefaultHttpClient(ccm, params);
-        } else {
-            return new DefaultHttpClient();
+            logger.logMessage("Force Trust Cert no longer disables TLS certificate validation. Add the AAP controller certificate to the Jenkins JVM trust store.");
         }
+        return new DefaultHttpClient();
     }
 
     private String buildEndpoint(String endpoint) {
